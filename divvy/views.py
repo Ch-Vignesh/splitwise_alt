@@ -301,7 +301,6 @@ def show_expenses(request, user_id=None):
             balances[user.name] = balance
         return Response(balances)
 
-
 @api_view(['POST'])
 def add_user(request):
     # Extract data from the request
