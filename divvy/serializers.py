@@ -6,10 +6,17 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['userId', 'name', 'email', 'mobileNumber']
 
-class ExpenseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Expense
-        fields = ['expenseId', 'desc', 'amount', 'createdById', 'createdAt']
+# class ExpenseSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Expense
+#         fields = ['expenseId', 'desc', 'amount', 'createdById', 'createdAt']
+
+class ExpenseSerializer(serializers.Serializer):
+    expense_type = serializers.CharField()
+    desc = serializers.CharField()
+    total_amount = serializers.IntegerField()
+    paidBy = serializers.DictField()
+    owedBy = serializers.DictField()
 
 class ExpensePaidBySerializer(serializers.ModelSerializer):
     class Meta:

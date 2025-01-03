@@ -1,9 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Management</title>
+    <link rel="stylesheet" href="/splitwise/static/css/styles.css">
+</head>
 <body>
+    <header>
+        <div class="container">
+            <h1>Expense Management System</h1>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/register">Register</a></li>
+                    <li><a href="/profile">Profile</a></li>
+                    <li><a href="/add_expense">Add Expense</a></li>
+                    <li><a href="/show_expenses">Show Expenses</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-<h1>Hello World!</h1>
-<p>Welcome to my first Django project!</p>
+    <main>
+        <section class="intro">
+            <h2>Welcome to the Expense Management System</h2>
+            <p>Track your expenses, split bills with friends, and manage your finances easily.</p>
+        </section>
 
+        <section class="actions">
+            <div class="action-item">
+                <h3>Register</h3>
+                <p>Create an account to get started.</p>
+                <a href="/register" class="btn">Register</a>
+            </div>
+
+            <div class="action-item">
+                <h3>Manage Expenses</h3>
+                <p>Add and view your expenses easily.</p>
+                <a href="/add_expense" class="btn">Add Expense</a>
+                <a href="/show_expenses" class="btn">Show Expenses</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Expense Management System. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>

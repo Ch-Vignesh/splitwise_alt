@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details</title>
+</head>
+<body>
+    <h1>Transaction Overview</h1>
+
+    {% if expenses %}
+        <h2>User Expenses</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Expense ID</th>
+                    <th>Description</th>
+                    <th>Total Amount</th>
+                    <th>Paid By User</th>
+                    <th>Owed By User</th>
+                    <th>Balance</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.expense_id }}</td>
+                        <td>{{ expense.description }}</td>
+                        <td>{{ expense.amount }}</td>
+                        <td>{{ expense.paid_by_user }}</td>
+                        <td>{{ expense.owed_by_user }}</td>
+                        <td>{{ expense.balance }}</td>
+                        <td>{{ expense.created_at }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Total Paid: {{ total_paid }}</h3>
+        <h3>Total Owed: {{ total_owed }}</h3>
+        <h3>Total Balance: {{ total_balance }}</h3>
+    {% else %}
+        <p>No expenses available.</p>
+    {% endif %}
+</body>
+</html>

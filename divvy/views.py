@@ -24,6 +24,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
+from .validators import validate_exp_type, validate_desc, validate_total_amt, validate_user_ids, validate_total, validate_created_by
 
 
 def register_user(request):
@@ -34,7 +35,7 @@ def register_user(request):
             return redirect('login')
     else:
         form = UserCreationForm()
-    return render(request, 'register.html', {'form': form})
+    return render(request, '/home/wac/Downloads/splitwise/splitwise/templates/register.html', {'form': form})
 
 
 @login_required
@@ -73,12 +74,19 @@ def validate_total_amt(amt):
         raise ValueError("Total amount must be an integer.")
 
 
-def validate_user_ids(user_ids, user_id_list, field_name):
-    for uid, amt in user_ids.items():
-        if int(uid) not in user_id_list:
-            raise ValueError(f"Invalid user ID '{uid}' in '{field_name}'.")
-        if not isinstance(amt, (int, float)):
-            raise ValueError("Amount must be a number.")
+# def validate_user_ids(user_ids, user_id_list, field_name):
+#     for uid, amt in user_ids.items():
+#         if int(uid) not in user_id_list:
+#             raise ValueError(f"Invalid user ID '{uid}' in '{field_name}'.")
+#         if not isinstance(amt, (int, float)):
+#             raise ValueError("Amount must be a number.")
+
+def validate_user_ids(user_ids, uid_list):
+    if user_ids is None:
+        raise ValueError("User IDs cannot be None")
+    for user_id, value in user_ids.items():
+        if int(user_id) not in uid_list:
+            raise ValueError(f"Invalid user ID '{user_id}'.")
 
 
 def validate_total(total_dict, expected_total):
@@ -93,15 +101,26 @@ def validate_created_by(created_by_id, user_id_list):
         raise ValueError(f"Invalid created by user ID '{created_by_id}'.")
 
 
+
 @api_view(["POST"])
 def add_expense(request):
     # Extract data from the request
-    exp_type = request.data.get("expense_type")
-    desc = request.data.get("desc")
-    amt = request.data.get("total_amount")
-    paid_by = request.data.get("paid_by")
-    owed_by = request.data.get("owed_by")
-    created_by_id = request.data.get("created_by_id")
+    data = request.data
+
+    paid_by = data.get('paidBy')
+    owed_by = data.get('owedBy')
+    created_by_id = data.get('created_by')
+
+    exp_type = data.get("expense_type")
+    desc = data.get("desc")
+    amt = data.get("total_amount")
+
+    # Validation checks for paid_by and owed_by
+    if not paid_by or not owed_by:
+        return Response({'error': 'Paid By and Owed By cannot be None'}, status=400)
+
+    if created_by_id is None:
+        return Response({'error': 'Created By cannot be None'}, status=400)
 
     # Get list of user IDs from the database
     uid_list = list(User.objects.values_list("userId", flat=True))
@@ -111,8 +130,15 @@ def add_expense(request):
         validate_exp_type(exp_type)
         validate_desc(desc)
         validate_total_amt(amt)
-        validate_user_ids(paid_by, uid_list, "paid_by")
-        validate_user_ids(owed_by, uid_list, "owed_by")
+
+        print("Paid By:", paid_by)
+        print("Owed By:", owed_by)
+
+        # Validate user IDs in paid_by and owed_by
+        validate_user_ids(paid_by, uid_list)
+        validate_user_ids(owed_by, uid_list)
+
+        # Validate totals based on expense type
         validate_total(paid_by, amt)
         if exp_type == "EQUAL":
             validate_total(owed_by, 0)
@@ -120,17 +146,17 @@ def add_expense(request):
             validate_total(owed_by, amt)
         elif exp_type == "PERCENT":
             validate_total(owed_by, 100)
+        
+        # Validate created_by_id
         validate_created_by(created_by_id, uid_list)
 
         # Check maximum number of participants
         if len(paid_by) > 1000 or len(owed_by) > 1000:
-            raise ValueError(
-                "The maximum number of participants for an expense is 1000.")
+            raise ValueError("The maximum number of participants for an expense is 1000.")
 
         # Check maximum amount for an expense
         if amt > 100000000:
-            raise ValueError(
-                "The maximum amount for an expense is INR 1,00,00,000.")
+            raise ValueError("The maximum amount for an expense is INR 1,00,00,000.")
 
     # Validate input data
     try:
@@ -153,8 +179,8 @@ def add_expense(request):
         )
         for uid, val in paid_by.items()
     ]
-
-    # Use bulk_create to insert all expenses paid by into the database
+    
+    # Bulk create ExpensePaidBy records
     ExpensePaidBy.objects.bulk_create(exp_paid)
 
     # Create ExpenseOwedBy objects based on expense type
@@ -192,7 +218,7 @@ def add_expense(request):
             for uid, val in owed_by.items()
         ]
 
-    # Use bulk_create to insert all expenses owed by into the database
+    # Bulk create ExpenseOwedBy records
     ExpenseOwedBy.objects.bulk_create(exp_owed)
 
     # Return success response
@@ -200,7 +226,6 @@ def add_expense(request):
         {"message": f"Expense successfully added, EID : {expense_id}"},
         status=status.HTTP_201_CREATED,
     )
-
 
 @api_view(["GET"])
 def show_expenses(request, user_id=None):
